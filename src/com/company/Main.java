@@ -1,18 +1,16 @@
 package com.company;
-
 import javax.swing.*;
 import java.awt.*;
 
 public class Main extends JFrame {
-    private Tehc logic;
     public Main() {
-        logic = new Tehc();
+        Tehc logic = new Tehc();
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setFont(new Font("Roboto", Font.PLAIN, 20));
         setTitle("4row");
         setResizable(false);
         setBounds(300, 50, 750, 870);
-        setContentPane(logic.contentPane);
+        setContentPane(logic.content_pane);
     }
 
     public static void main(String[] args) {
