@@ -3,7 +3,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public class Main extends JFrame {
-    public Main() {
+    public Main() throws Exception {
         Tehc logic = new Tehc();
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setFont(new Font("Roboto", Font.PLAIN, 20));
