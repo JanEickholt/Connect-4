@@ -7,7 +7,8 @@ public class Main extends JFrame {
         Tehc logic = new Tehc();
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setFont(new Font("Roboto", Font.PLAIN, 20));
-        setTitle("4row");
+        setTitle("Connect 4");
+        setIconImage(new ImageIcon(Tehc.image_folder + "\\AppIcon.png").getImage());
         setResizable(false);
         setBounds(300, 50, 750, 870);
         setContentPane(logic.content_pane);

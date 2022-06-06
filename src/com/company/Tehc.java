@@ -6,6 +6,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.Scanner;
 import javax.imageio.ImageIO;
+import javax.sound.sampled.*;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
@@ -26,26 +27,25 @@ public class Tehc {
     Graphics2D[][] allGraphics;
     BufferedImage[][] allImages;
     Color color_button = new Color(200, 200, 200);
-    public static String folder = new File(".").getAbsolutePath() + "\\src\\com\\company\\images\\";
-    ImageIcon playAgain = new ImageIcon(folder + "ButtonPlayAgain.png");
+    public static String image_folder = new File(".").getAbsolutePath() + "\\src\\com\\company\\images\\";
+    public static String sound_folder = new File(".").getAbsolutePath() + "\\src\\com\\company\\sounds\\";
+    ImageIcon playAgain = new ImageIcon(image_folder + "ButtonPlayAgain.png");
     Color color_player1 = new Color(204, 43, 11);
     Color color_player2 = new Color(219, 196, 0);
     Timer animation;
     int animation_delay = 45;
 
-    BufferedImage img_background = ImageIO.read(new File(folder + "ChipBackground.png"));
-    BufferedImage img_empty = ImageIO.read(new File(folder + "ChipEmpty.png"));
-    BufferedImage img_player1 = ImageIO.read(new File(folder + "ChipRed.png"));
-    BufferedImage img_player2 = ImageIO.read(new File(folder + "ChipYellow.png"));
-    BufferedImage img_vertical = ImageIO.read(new File(folder + "WinLineVertical.png"));
-    BufferedImage img_horizontal = ImageIO.read(new File(folder + "WinLineHorizontal.png"));
-    BufferedImage img_top_left_to_bottom_right = ImageIO.read(new File(folder + "WinLineTLBR.png"));
-    BufferedImage img_bottom_left_to_top_right = ImageIO.read(new File(folder + "WinLineBLTR.png"));
+    BufferedImage img_background = ImageIO.read(new File(image_folder + "ChipBackground.png"));
+    BufferedImage img_empty = ImageIO.read(new File(image_folder + "ChipEmpty.png"));
+    BufferedImage img_player1 = ImageIO.read(new File(image_folder + "ChipRed.png"));
+    BufferedImage img_player2 = ImageIO.read(new File(image_folder + "ChipYellow.png"));
+    BufferedImage img_vertical = ImageIO.read(new File(image_folder + "WinLineVertical.png"));
+    BufferedImage img_horizontal = ImageIO.read(new File(image_folder + "WinLineHorizontal.png"));
+    BufferedImage img_top_left_to_bottom_right = ImageIO.read(new File(image_folder + "WinLineTLBR.png"));
+    BufferedImage img_bottom_left_to_top_right = ImageIO.read(new File(image_folder + "WinLineBLTR.png"));
 
     public Tehc() throws Exception {
-        int x = 8;
-        int y = 8;
-        board = new char[x][y];
+        board = new char[8][8];
         getNumberOfGames();
         player_score = new char[number_of_games];
         initializeScore();
@@ -80,7 +80,11 @@ public class Tehc {
         restart_button.setBounds(275, 777, 200, 30);
         restart_button.setAlignmentX(Component.CENTER_ALIGNMENT);
         restart_button.addActionListener(arg0 -> {
-            restart();
+            try {
+                restart();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
             restart_button.setVisible(false);
         });
         restart_button.setVisible(false);
@@ -104,9 +108,22 @@ public class Tehc {
         for (int x_axis = 0; x_axis < 7; x_axis++) {
             createClickableButton(new JButton(), x_axis, 0);
         }
+
+        for (int x_axis = 0; x_axis < number_of_games; x_axis++){
+            for (int y_axis = 0; y_axis < 8; y_axis++){
+                for (int z_axis = 0; z_axis < 7; z_axis++){
+                    final BufferedImage combinedImage = new BufferedImage(img_background.getWidth(), img_background.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                    Graphics2D g2d = combinedImage.createGraphics();
+                    g2d.drawImage(img_background, 0, 0, null);
+                    g2d.drawImage(img_empty, 0, 0, null);
+                    g2d.dispose();
+                    previous_games[x_axis][y_axis][z_axis] = new ImageIcon(combinedImage);
+                }
+            }
+        }
     }
     
-    public void initializeBoard() {
+    public void initializeBoard() throws Exception{
         /*
         Initialisiert das Spielbrett
         und setzt dafür die Array-Elemente = '-'
@@ -116,6 +133,10 @@ public class Tehc {
                 board[x_axis][y_axis] = '-';
             }
         }
+        AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(new File(sound_folder + "start.wav"));
+        Clip clip = AudioSystem.getClip();
+        clip.open(audioInputStream);
+        clip.start();
     }
 
     public void initializeScore() {
@@ -180,7 +201,7 @@ public class Tehc {
     public void createClickableButton(JButton btn, int x_axis, int y_axis) {
         /*
         Kreiert einen Button oberhalb des Feldes,
-        der durch einen Klick einen Stein in die jeweilige Spalte setzt
+        der durch einen Klick einen Chip in die jeweilige Spalte setzt
          */
         btn.setBackground(color_button);
         btn.setBounds(x_axis * 100 + 20, y_axis * 100 + 20, 100, 100);
@@ -242,23 +263,6 @@ public class Tehc {
             win = true;
         }
         return win;
-    }
-
-    public void colorWin() {
-        /*
-        Ändert die Farbe des Buttons, wenn ein Spieler gewonnen hat
-         */
-        for (int x = 0; x < 8; x++) {
-            for (int y = 1; y < 7; y++) {
-                if (allGraphics[x][y] != null) {
-                    ImageIcon icon;
-                    allGraphics[x][y].dispose();
-                    icon = new ImageIcon(allImages[x][y]);
-                    all_buttons[x][y].setIcon(icon);
-                    all_buttons[x][y].setDisabledIcon(icon);
-                }
-            }
-        }
     }
 
     public boolean checkVertical() {
@@ -364,10 +368,27 @@ public class Tehc {
         allGraphics[x_axis][y_axis] = g;
     }
 
+    public void colorWin() {
+        /*
+        Zieht eine Linie an gewonnenen Positionen
+         */
+        for (int x = 0; x < 8; x++) {
+            for (int y = 1; y < 7; y++) {
+                if (allGraphics[x][y] != null) {
+                    ImageIcon icon;
+                    allGraphics[x][y].dispose();
+                    icon = new ImageIcon(allImages[x][y]);
+                    all_buttons[x][y].setIcon(icon);
+                    all_buttons[x][y].setDisabledIcon(icon);
+                }
+            }
+        }
+    }
+
     public boolean checkIfColumnFull(int x) {
         /*
         Überprüft, ob, eine Spalte voll ist
-        gibt true zurück, wenn die Spalte voll ist
+        gibt true zurück, wenn sie voll ist
         sonst false
          */
         for (int y_axis = 1; y_axis < 7; y_axis++) {
@@ -400,7 +421,7 @@ public class Tehc {
         }
     }
 
-    public void restart() {
+    public void restart() throws Exception {
         /*
         Startet ein neues Spiel
          */
@@ -408,10 +429,7 @@ public class Tehc {
 
         for (int x_axis = 0; x_axis < 7; x_axis++) {
             for (int y_axis = 1; y_axis < 7; y_axis++) {
-                final BufferedImage combinedImage = new BufferedImage(
-                        img_background.getWidth(),
-                        img_background.getHeight(),
-                        BufferedImage.TYPE_INT_ARGB);
+                final BufferedImage combinedImage = new BufferedImage(img_background.getWidth(), img_background.getHeight(), BufferedImage.TYPE_INT_ARGB);
                 Graphics2D g = combinedImage.createGraphics();
                 g.drawImage(img_background, 0, 0, null);
                 g.drawImage(img_empty, 0, 0, null);
@@ -456,8 +474,8 @@ public class Tehc {
             append(player_score, 'r');
         } else if (p == 'y') {
             append(player_score, 'y');
-        } else if (p == 'u') {
-            append(player_score, 'u');
+        } else if (p == 'd') {
+            append(player_score, 'd');
         }
     }
 
@@ -471,7 +489,7 @@ public class Tehc {
                 score[index].setBackground(color_player1);
             } else if (player_score[index] == 'y') {
                 score[index].setBackground(color_player2);
-            } else if (player_score[index] == 'u') {
+            } else if (player_score[index] == 'd') {
                 score[index].setBackground(Color.BLACK);
             } else {
                 score[index].setBackground(color_button);
@@ -494,7 +512,7 @@ public class Tehc {
                 redScore++;
             } else if (player_score[i] == 'y') {
                 yellowScore++;
-            } else if (player_score[i] == 'u') {
+            } else if (player_score[i] == 'd') {
                 uScore++;
             }
         }
@@ -525,7 +543,7 @@ public class Tehc {
         }
     }
 
-    public void evaluate(int x_axis) {
+    public void evaluate(int x_axis) throws Exception {
         /*
         Überprüft, ob ein Spieler gewonnen hat,
         wenn ja, dann wird das Spiel beendet.
@@ -535,11 +553,20 @@ public class Tehc {
         wenn ja, dann wird das Spiel beendet.
         Wechselt den Spieler.
          */
+        AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(new File(sound_folder + "drop.wav"));
+        Clip clip = AudioSystem.getClip();
+        clip.open(audioInputStream);
+        clip.start();
+
         if (checkIfColumnFull(x_axis)) {
             all_buttons[x_axis][0].setEnabled(false);
         }
 
         if (checkWin()) {
+            AudioInputStream audioInputStream2 = AudioSystem.getAudioInputStream(new File(sound_folder + "win.wav"));
+            Clip clip2 = AudioSystem.getClip();
+            clip2.open(audioInputStream2);
+            clip2.start();
             colorWin();
             last_winner.setText("Letzter Gewinner: " + longName(current_player));
             roundEnded(current_player);
@@ -547,7 +574,7 @@ public class Tehc {
 
         if (boardFull()) {
             last_winner.setText("Letzter Gewinner: Unentschieden");
-            roundEnded('u');
+            roundEnded('d');
         }
 
         changePlayer();
@@ -575,7 +602,7 @@ public class Tehc {
 
     public void fallingAnimation(int position) {
         /*
-        Animiert eine Kugel, wenn diese gesetzt wird
+        Animiert einen Chip, wenn diese gesetzt wird
          */
         ActionListener action = new ActionListener() {
             int y_axis = 1;
