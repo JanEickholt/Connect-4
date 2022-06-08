@@ -599,6 +599,7 @@ public class Tehc {
 
         if (boardFull()) {
             player_last_winner.setText("Unentschieden");
+            player_turn.setForeground(Color.BLACK);
             roundEnded('d');
         }
 
