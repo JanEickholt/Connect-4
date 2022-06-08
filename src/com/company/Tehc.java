@@ -19,7 +19,9 @@ public class Tehc {
     JPanel content_pane;
     JButton[][] all_buttons;
     JLabel last_winner;
+    JLabel player_last_winner;
     JLabel turn;
+    JLabel player_turn;
     JButton restart_button;
     JButton[] score;
     Icon[][][] previous_games;
@@ -32,9 +34,11 @@ public class Tehc {
     ImageIcon playAgain = new ImageIcon(image_folder + "ButtonPlayAgain.png");
     Color color_player1 = new Color(204, 43, 11);
     Color color_player2 = new Color(219, 196, 0);
+    Color color_player2_turn = new Color(144, 134, 49);
     Timer animation;
     int animation_delay = 45;
 
+    ImageIcon insertCoin = new ImageIcon(image_folder + "InsertCoin.png");
     BufferedImage img_background = ImageIO.read(new File(image_folder + "ChipBackground.png"));
     BufferedImage img_empty = ImageIO.read(new File(image_folder + "ChipEmpty.png"));
     BufferedImage img_player1 = ImageIO.read(new File(image_folder + "ChipRed.png"));
@@ -62,14 +66,25 @@ public class Tehc {
         // Zeigt den letzten Gewinner an
         last_winner = new JLabel("Letzter Gewinner:");
         last_winner.setFont(new Font("Roboto", Font.PLAIN, 15));
-        last_winner.setBounds(25, 780, 500, 20);
+        last_winner.setBounds(25, 740, 500, 20);
         content_pane.add(last_winner);
 
+        player_last_winner = new JLabel("");
+        player_last_winner.setFont(new Font("Roboto", Font.PLAIN, 15));
+        player_last_winner.setBounds(145, 740, 500, 20);
+        content_pane.add(player_last_winner);
+
         // Zeigt den aktuellen Spieler an
-        turn = new JLabel("Reihe: Rot");
+        turn = new JLabel("Reihe:");
         turn.setFont(new Font("Roboto", Font.PLAIN, 15));
-        turn.setBounds(575, 780, 500, 20);
+        turn.setBounds(575, 740, 500, 20);
         content_pane.add(turn);
+
+        player_turn = new JLabel("Rot");
+        player_turn.setFont(new Font("Roboto", Font.PLAIN, 15));
+        player_turn.setForeground(color_player1);
+        player_turn.setBounds(620, 740, 500, 20);
+        content_pane.add(player_turn);
 
         // Erstellt den Restart Button
         restart_button = new JButton();
@@ -77,7 +92,7 @@ public class Tehc {
         restart_button.setBackground(Color.white);
         restart_button.setBorder(null);
         restart_button.setFont(new Font("Roboto", Font.PLAIN, 15));
-        restart_button.setBounds(275, 777, 200, 30);
+        restart_button.setBounds(275, 737, 200, 30);
         restart_button.setAlignmentX(Component.CENTER_ALIGNMENT);
         restart_button.addActionListener(arg0 -> {
             try {
@@ -191,7 +206,7 @@ public class Tehc {
         g.dispose();
         btn.setIcon(new ImageIcon(combinedImage));
         btn.setDisabledIcon(new ImageIcon(combinedImage));
-        btn.setBounds(x * 100 + 20, y * 100 + 40, 100, 100);
+        btn.setBounds(x * 100 + 20, y * 100, 100, 100);
         btn.setBorder(new EmptyBorder(0, 0, 0, 0));
         btn.setEnabled(false);
         content_pane.add(btn);
@@ -203,8 +218,12 @@ public class Tehc {
         Kreiert einen Button oberhalb des Feldes,
         der durch einen Klick einen Chip in die jeweilige Spalte setzt
          */
-        btn.setBackground(color_button);
-        btn.setBounds(x_axis * 100 + 20, y_axis * 100 + 20, 100, 100);
+        btn.setBackground(new Color(238, 238, 238));
+        btn.setBorder(new EmptyBorder(0, 0, 0, 0));
+        btn.setIcon(insertCoin);
+        btn.setDisabledIcon(insertCoin);
+        btn.setRolloverSelectedIcon(insertCoin);
+        btn.setBounds(x_axis * 100 + 20, y_axis * 100, 100, 100);
         btn.addActionListener(arg0 -> fallingAnimation(x_axis));
         content_pane.add(btn);
         all_buttons[x_axis][y_axis] = btn;
@@ -568,18 +587,29 @@ public class Tehc {
             clip2.open(audioInputStream2);
             clip2.start();
             colorWin();
-            last_winner.setText("Letzter Gewinner: " + longName(current_player));
+
+            if (current_player == 'r') {
+                player_last_winner.setForeground(color_player1);
+            } else {
+                player_last_winner.setForeground(color_player2_turn);
+            }
+            player_last_winner.setText(longName(current_player));
             roundEnded(current_player);
         }
 
         if (boardFull()) {
-            last_winner.setText("Letzter Gewinner: Unentschieden");
+            player_last_winner.setText("Unentschieden");
             roundEnded('d');
         }
 
         changePlayer();
-        turn.setText("Reihe: " + longName(current_player));
-
+        if (current_player == 'r') {
+            player_turn.setText(longName(current_player));
+            player_turn.setForeground(color_player1);
+        } else {
+            player_turn.setText(longName(current_player));
+            player_turn.setForeground(color_player2_turn);
+        }
     }
 
     public void roundEnded(char player_who_won) {
@@ -685,7 +715,7 @@ public class Tehc {
         Erstellt einen Button für die Score-Anzeige
          */
         JButton btn = new JButton();
-        btn.setBounds((700 / amount_of_best_of_buttons) * index_of_best_of_button + 20, 750, (700 / amount_of_best_of_buttons), 20);
+        btn.setBounds((700 / amount_of_best_of_buttons) * index_of_best_of_button + 20, 710, (700 / amount_of_best_of_buttons), 20);
         btn.setBackground(color_button);
         btn.addActionListener(arg0 -> renderGUI(index_of_best_of_button));
         btn.setEnabled(true);

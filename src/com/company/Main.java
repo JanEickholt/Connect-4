@@ -10,7 +10,7 @@ public class Main extends JFrame {
         setTitle("Connect 4");
         setIconImage(new ImageIcon(Tehc.image_folder + "\\AppIcon.png").getImage());
         setResizable(false);
-        setBounds(300, 50, 750, 870);
+        setBounds(300, 50, 750, 830);
         setContentPane(logic.content_pane);
     }
 
