@@ -38,7 +38,7 @@ public class Tehc {
     Timer animation;
     int animation_delay = 45;
 
-    ImageIcon insertCoin = new ImageIcon(image_folder + "InsertCoin.png");
+    ImageIcon ChipInsert = new ImageIcon(image_folder + "ChipInsert.png");
     BufferedImage img_background = ImageIO.read(new File(image_folder + "ChipBackground.png"));
     BufferedImage img_empty = ImageIO.read(new File(image_folder + "ChipEmpty.png"));
     BufferedImage img_player1 = ImageIO.read(new File(image_folder + "ChipRed.png"));
@@ -220,9 +220,9 @@ public class Tehc {
          */
         btn.setBackground(new Color(238, 238, 238));
         btn.setBorder(new EmptyBorder(0, 0, 0, 0));
-        btn.setIcon(insertCoin);
-        btn.setDisabledIcon(insertCoin);
-        btn.setRolloverSelectedIcon(insertCoin);
+        btn.setIcon(ChipInsert);
+        btn.setDisabledIcon(ChipInsert);
+        btn.setRolloverSelectedIcon(ChipInsert);
         btn.setBounds(x_axis * 100 + 20, y_axis * 100, 100, 100);
         btn.addActionListener(arg0 -> fallingAnimation(x_axis));
         content_pane.add(btn);
@@ -410,12 +410,7 @@ public class Tehc {
         gibt true zurück, wenn sie voll ist
         sonst false
          */
-        for (int y_axis = 1; y_axis < 7; y_axis++) {
-            if (board[x][y_axis] == '-') {
-                return false;
-            }
-        }
-        return true;
+        return board[x][1] != '-';
     }
 
     public void disableButtons() {
@@ -475,11 +470,9 @@ public class Tehc {
         sonst false
          */
         for (int x_axis = 0; x_axis < 7; x_axis++) {
-            for (int y_axis = 0; y_axis < 7; y_axis++) {
-                if (board[x_axis][y_axis] == '-') {
+                if (board[x_axis][1] == '-') {
                     return false;
                 }
-            }
         }
         return true;
     }
@@ -599,7 +592,7 @@ public class Tehc {
 
         if (boardFull()) {
             player_last_winner.setText("Unentschieden");
-            player_turn.setForeground(Color.BLACK);
+            player_last_winner.setForeground(Color.BLACK);
             roundEnded('d');
         }
 
