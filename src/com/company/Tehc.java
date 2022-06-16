@@ -4,7 +4,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.util.Scanner;
 import javax.imageio.ImageIO;
 import javax.sound.sampled.*;
 import javax.swing.*;
@@ -12,33 +11,58 @@ import javax.swing.border.EmptyBorder;
 
 public class Tehc {
     char[][] board;
-    final char[] player_score;
+    char[] player_score;
+
     char current_player = 'r';
     int number_of_games = 0;
-    int user_input;
+    int game_count = 0;
+
+    String red_player_name = "Rot";
+    String yellow_player_name = "Gelb";
+
     JPanel content_pane;
     JButton[][] all_buttons;
+    JButton[] score;
+    JButton restart_button;
+    Icon[][][] previous_games;
+    Graphics2D[][] allGraphics;
+    BufferedImage[][] allImages;
+
     JLabel last_winner;
     JLabel player_last_winner;
     JLabel turn;
     JLabel player_turn;
-    JButton restart_button;
-    JButton[] score;
-    Icon[][][] previous_games;
-    int game_count = 0;
-    Graphics2D[][] allGraphics;
-    BufferedImage[][] allImages;
-    Color color_button = new Color(200, 200, 200);
+
     public static String image_folder = new File(".").getAbsolutePath() + "\\src\\com\\company\\images\\";
     public static String sound_folder = new File(".").getAbsolutePath() + "\\src\\com\\company\\sounds\\";
-    ImageIcon playAgain = new ImageIcon(image_folder + "ButtonPlayAgain.png");
+
+    Color color_button = new Color(200, 200, 200);
     Color color_player1 = new Color(204, 43, 11);
     Color color_player2 = new Color(219, 196, 0);
     Color color_player2_turn = new Color(144, 134, 49);
+
     Timer animation;
     int animation_delay = 45;
 
-    ImageIcon ChipInsert = new ImageIcon(image_folder + "ChipInsert.png");
+    JLabel selection_title;
+    JLabel selection_starting_turn;
+    JButton selection_finished;
+    JButton selection_starting_turn_red_button;
+    JButton selection_starting_turn_yellow_button;
+    JLabel selection_starting_turn_red_label;
+    JLabel selection_starting_turn_yellow_label;
+    JLabel selection_best_of_label;
+    JTextField selection_best_of_text_field;
+    JLabel selection_player_names;
+    JLabel selection_player_names_red;
+    JLabel selection_player_names_yellow;
+    JTextField selection_player_names_red_text_field;
+    JTextField selection_player_names_yellow_text_field;
+
+    ImageIcon play_again = new ImageIcon(image_folder + "ButtonPlayAgain.png");
+    ImageIcon chip_insert = new ImageIcon(image_folder + "ChipInsert.png");
+    ImageIcon selected_circle = new ImageIcon(image_folder + "SelectedCircle.png");
+    ImageIcon not_selected_circle = new ImageIcon(image_folder + "NotSelectedCircle.png");
     BufferedImage img_background = ImageIO.read(new File(image_folder + "ChipBackground.png"));
     BufferedImage img_empty = ImageIO.read(new File(image_folder + "ChipEmpty.png"));
     BufferedImage img_player1 = ImageIO.read(new File(image_folder + "ChipRed.png"));
@@ -48,12 +72,9 @@ public class Tehc {
     BufferedImage img_top_left_to_bottom_right = ImageIO.read(new File(image_folder + "WinLineTLBR.png"));
     BufferedImage img_bottom_left_to_top_right = ImageIO.read(new File(image_folder + "WinLineBLTR.png"));
 
+
     public Tehc() throws Exception {
         board = new char[8][8];
-        getNumberOfGames();
-        player_score = new char[number_of_games];
-        initializeScore();
-        initializeBoard();
         initializeGraphics();
         initializeImages();
 
@@ -61,34 +82,34 @@ public class Tehc {
         content_pane = new JPanel();
         content_pane.setBorder(new EmptyBorder(5, 5, 5, 5));
         content_pane.setLayout(null);
-        createBestOfButtons(number_of_games);
+
 
         // Zeigt den letzten Gewinner an
         last_winner = new JLabel("Letzter Gewinner:");
         last_winner.setFont(new Font("Roboto", Font.PLAIN, 15));
         last_winner.setBounds(25, 740, 500, 20);
-        content_pane.add(last_winner);
+
 
         player_last_winner = new JLabel("");
         player_last_winner.setFont(new Font("Roboto", Font.PLAIN, 15));
         player_last_winner.setBounds(145, 740, 500, 20);
-        content_pane.add(player_last_winner);
+
 
         // Zeigt den aktuellen Spieler an
         turn = new JLabel("Reihe:");
         turn.setFont(new Font("Roboto", Font.PLAIN, 15));
         turn.setBounds(575, 740, 500, 20);
-        content_pane.add(turn);
 
-        player_turn = new JLabel("Rot");
+
+        player_turn = new JLabel(longName(current_player));
         player_turn.setFont(new Font("Roboto", Font.PLAIN, 15));
         player_turn.setForeground(color_player1);
         player_turn.setBounds(620, 740, 500, 20);
-        content_pane.add(player_turn);
+
 
         // Erstellt den Restart Button
         restart_button = new JButton();
-        restart_button.setIcon(playAgain);
+        restart_button.setIcon(play_again);
         restart_button.setBackground(Color.white);
         restart_button.setBorder(null);
         restart_button.setFont(new Font("Roboto", Font.PLAIN, 15));
@@ -103,16 +124,9 @@ public class Tehc {
             restart_button.setVisible(false);
         });
         restart_button.setVisible(false);
-        content_pane.add(restart_button);
-
-        // Blockiert die best of Buttons, wenn ein Spiel läuft
-        for (int i = 0; i < number_of_games; i++) {
-            score[i].setEnabled(false);
-        }
 
         // Erstellt die Buttons mit den jeweiligen Koordinaten und fügt sie zu allButtons hinzu
         all_buttons = new JButton[8][7];
-        previous_games = new Icon[number_of_games][8][7];
 
         for (int x_axis = 0; x_axis < 7; x_axis++) {
             for (int y_axis = 1; y_axis < 7; y_axis++) {
@@ -136,8 +150,155 @@ public class Tehc {
                 }
             }
         }
+
+        alignLabel(selection_title = new JLabel("Einstellungen"), 30, 225, 25, 300, 50, true);
+        alignLabel(selection_starting_turn = new JLabel("Beginner"), 20, 75, 100, 150, 50, true);
+        alignLabel(selection_starting_turn_red_label = new JLabel("Rot"), 15, 100, 150, 50, 50, true);
+        alignLabel(selection_starting_turn_yellow_label = new JLabel("Gelb"), 15, 150, 150, 50, 50, true);
+        alignLabel(selection_best_of_label = new JLabel("Best of"), 20, 562, 100, 100, 50, false);
+        alignLabel(selection_player_names = new JLabel("Name"), 20, 300, 290, 150, 50, true);
+        alignLabel(selection_player_names_red = new JLabel("Rot"), 15, 245, 325, 50, 50, false);
+        alignLabel(selection_player_names_yellow = new JLabel("Gelb"), 15, 245, 350, 50, 50, false);
+
+        selection_player_names_red.setHorizontalAlignment(JLabel.RIGHT);
+        selection_player_names_yellow.setHorizontalAlignment(JLabel.RIGHT);
+
+        selection_player_names_red_text_field = new JTextField();
+        selection_player_names_red_text_field.setBounds(303, 338, 150, 25);
+        selection_player_names_red_text_field.setFont(new Font("Roboto", Font.PLAIN, 15));
+        selection_player_names_red_text_field.setDocument(new JTextFieldLimit(12));
+        content_pane.add(selection_player_names_red_text_field);
+
+
+        selection_player_names_yellow_text_field = new JTextField();
+        selection_player_names_yellow_text_field.setBounds(303, 363, 150, 25);
+        selection_player_names_yellow_text_field.setFont(new Font("Roboto", Font.PLAIN, 15));
+        selection_player_names_yellow_text_field.setDocument(new JTextFieldLimit(12));
+        content_pane.add(selection_player_names_yellow_text_field);
+
+
+        selection_best_of_text_field = new JTextField();
+        selection_best_of_text_field.setFont(new Font("Roboto", Font.PLAIN, 20));
+        selection_best_of_text_field.setBounds(570, 140, 50, 50);
+        selection_best_of_text_field.setDocument(new JTextFieldLimit(3));
+        selection_best_of_text_field.setText("3");
+        selection_best_of_text_field.setHorizontalAlignment(JTextField.CENTER);
+        content_pane.add(selection_best_of_text_field);
+
+        selection_starting_turn_red_button = new JButton();
+        selection_starting_turn_red_button.setIcon(selected_circle);
+        selection_starting_turn_red_button.setBounds(113, 140, 25, 25);
+        selection_starting_turn_red_button.setHorizontalAlignment(JButton.CENTER);
+        selection_starting_turn_red_button.setBorder(null);
+        selection_starting_turn_red_button.addActionListener(arg0 -> {
+            current_player = 'r';
+            selection_starting_turn_yellow_button.setIcon(not_selected_circle);
+            selection_starting_turn_red_button.setIcon(selected_circle);
+            player_turn.setText(longName(current_player));
+            player_turn.setForeground(color_player1);
+        });
+        content_pane.add(selection_starting_turn_red_button);
+
+
+        selection_starting_turn_yellow_button = new JButton();
+        selection_starting_turn_yellow_button.setIcon(not_selected_circle);
+        selection_starting_turn_yellow_button.setBounds(162, 140, 25, 25);
+        selection_starting_turn_yellow_button.setBorder(null);
+        selection_starting_turn_yellow_button.addActionListener(arg0 -> {
+            current_player = 'y';
+            selection_starting_turn_yellow_button.setIcon(selected_circle);
+            selection_starting_turn_red_button.setIcon(not_selected_circle);
+            player_turn.setText(longName(current_player));
+            player_turn.setForeground(color_player2);
+        });
+        content_pane.add(selection_starting_turn_yellow_button);
+
+
+        selection_finished = new JButton("Start");
+        selection_finished.setFont(new Font("Roboto", Font.PLAIN, 20));
+        selection_finished.setBounds(275, 737, 200, 30);
+        selection_finished.setHorizontalAlignment(JButton.CENTER);
+        selection_finished.addActionListener(arg0 -> {
+
+            if (selection_validation()) {
+
+                try {
+                    initializeBoard();
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+                content_pane.removeAll();
+
+                for (int x_axis = 0; x_axis < 7; x_axis++) {
+                    for (int y_axis = 0; y_axis < 7; y_axis++) {
+                        content_pane.add(all_buttons[x_axis][y_axis]);
+                    }
+                }
+
+                previous_games = new Icon[number_of_games][8][7];
+                createBestOfButtons(number_of_games);
+
+                player_score = new char[number_of_games];
+                initializeScore();
+
+                for (int i = 0; i < number_of_games; i++) {
+                    content_pane.add(score[i]);
+                }
+
+                // Blockiert die best of Buttons, wenn ein Spiel läuft
+                for (int i = 0; i < number_of_games; i++) {
+                    score[i].setEnabled(false);
+                }
+
+                content_pane.add(last_winner);
+                content_pane.add(player_last_winner);
+                content_pane.add(turn);
+                content_pane.add(player_turn);
+                content_pane.add(restart_button);
+
+                content_pane.revalidate();
+                content_pane.repaint();
+            }
+
+        });
+        content_pane.add(selection_finished);
     }
-    
+
+    public boolean selection_validation() {
+        try {
+            Integer.parseInt(selection_best_of_text_field.getText());
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(null, "Bitte geben Sie eine gültige Zahl im Best of Feld ein!");
+            return false;
+        }
+
+        if (Integer.parseInt(selection_best_of_text_field.getText()) < 1 || Integer.parseInt(selection_best_of_text_field.getText()) > 128) {
+            JOptionPane.showMessageDialog(null, "Bitte geben Sie eine Zahl zwischen 1 und 128 im Best of Feld ein!");
+            return false;
+        }
+
+        if (!selection_player_names_red_text_field.getText().equals("")){
+            red_player_name = selection_player_names_red_text_field.getText();
+        }
+
+        if (!selection_player_names_yellow_text_field.getText().equals("")){
+            yellow_player_name = selection_player_names_yellow_text_field.getText();
+        }
+
+        number_of_games = Integer.parseInt(selection_best_of_text_field.getText());
+
+        player_turn.setText(longName(current_player));
+
+        return true;
+    }
+
+    public void alignLabel(JLabel lbl, int font_size, int x_axis, int y_axis, int width, int height, boolean center) {
+        lbl.setFont(new Font("Roboto", Font.PLAIN, font_size));
+        lbl.setBounds(x_axis, y_axis, width, height);
+        if (center) {lbl.setHorizontalAlignment(JLabel.CENTER);}
+        content_pane.add(lbl);
+    }
+
     public void initializeBoard() throws Exception{
         /*
         Initialisiert das Spielbrett
@@ -209,7 +370,6 @@ public class Tehc {
         btn.setBounds(x * 100 + 20, y * 100, 100, 100);
         btn.setBorder(new EmptyBorder(0, 0, 0, 0));
         btn.setEnabled(false);
-        content_pane.add(btn);
         all_buttons[x][y] = btn;
     }
 
@@ -220,40 +380,12 @@ public class Tehc {
          */
         btn.setBackground(new Color(238, 238, 238));
         btn.setBorder(new EmptyBorder(0, 0, 0, 0));
-        btn.setIcon(ChipInsert);
-        btn.setDisabledIcon(ChipInsert);
-        btn.setRolloverSelectedIcon(ChipInsert);
+        btn.setIcon(chip_insert);
+        btn.setDisabledIcon(chip_insert);
+        btn.setRolloverSelectedIcon(chip_insert);
         btn.setBounds(x_axis * 100 + 20, y_axis * 100, 100, 100);
         btn.addActionListener(arg0 -> fallingAnimation(x_axis));
-        content_pane.add(btn);
         all_buttons[x_axis][y_axis] = btn;
-    }
-
-    public void getNumberOfGames() {
-        /*
-        Fragt den Benutzer nach der Anzahl der Spiele,
-        die er spielen möchte
-         */
-        System.out.println("Wie viele Spiele willst du spielen? / Best of:");
-        Scanner scanner = new Scanner(System.in);
-        try {
-            user_input = scanner.nextInt();
-        } catch (Exception e) {
-            System.out.println("Bitte eine Zahl eingeben!");
-            getNumberOfGames();
-        }
-
-        if (user_input <= 0) {
-            System.out.println("Bitte eine Zahl größer als 0 eingeben");
-            getNumberOfGames();
-        }
-        if (user_input > 128) {
-            System.out.println("Bitte eine Zahl kleiner oder gleich 128 eingeben");
-            getNumberOfGames();
-        } else {
-            number_of_games = user_input;
-            scanner.close();
-        }
     }
 
     public void changePlayer() {
@@ -429,9 +561,9 @@ public class Tehc {
         Gibt den langen Namen des Spielers zurück
          */
         if (currentPlayer == 'r') {
-            return "Rot";
+            return red_player_name;
         } else {
-            return "Gelb";
+            return yellow_player_name;
         }
     }
 
@@ -713,7 +845,6 @@ public class Tehc {
         btn.setBackground(color_button);
         btn.addActionListener(arg0 -> renderGUI(index_of_best_of_button));
         btn.setEnabled(true);
-        content_pane.add(btn);
         score[index_of_best_of_button] = btn;
     }
 
